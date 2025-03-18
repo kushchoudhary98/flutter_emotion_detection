@@ -1,8 +1,10 @@
 import 'dart:io';
 import 'package:camera/camera.dart';
+import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:get/get_state_manager/get_state_manager.dart';
 import 'package:google_mlkit_commons/google_mlkit_commons.dart';
+import 'package:image/image.dart' as imglib;
 
 class CameraManager extends GetxController {
   CameraController? cameraController;
@@ -164,6 +166,45 @@ class CameraManager extends GetxController {
     return Uint8List.fromList(rgbBytes);
   }
 
+  imglib.Image convertYUV420ToGrayscale(CameraImage image) {
+    // Ensure the image format is YUV420
+    if (image.format.group != ImageFormatGroup.yuv420) {
+      throw UnsupportedError('Unsupported image format: ${image.format.group}');
+    }
+
+    // Extract the Y plane (luminance)
+    final yPlane = image.planes[0];
+    final width = image.width;
+    final height = image.height;
+
+    // Create an Image buffer with the same width and height
+    final imglib.Image grayscaleImage = imglib.Image(width: width, height: height);
+
+    // Iterate over each pixel to set the luminance value
+    for (int y = 0; y < height; y++) {
+      for (int x = 0; x < width; x++) {
+        final index = y * width + x;
+        final luminance = yPlane.bytes[index];
+        if(x < 2 && y < 2) print(luminance);
+        grayscaleImage.setPixel(x, y, imglib.ColorInt32.rgb(luminance, luminance, luminance));
+      }
+    }
+
+    // Encode the grayscale image to PNG format
+    return grayscaleImage;
+  }
+
+  Uint8List convertGrayscaleToRGBA(int width, int height, Uint8List grayscaleBytes) {
+    Uint8List rgbaBytes = Uint8List(width * height * 4);
+    for (int i = 0; i < grayscaleBytes.length; i++) {
+      int pixel = grayscaleBytes[i];
+      rgbaBytes[i * 4] = pixel; // R
+      rgbaBytes[i * 4 + 1] = pixel; // G
+      rgbaBytes[i * 4 + 2] = pixel; // B
+      rgbaBytes[i * 4 + 3] = 255; // Alpha
+    }
+    return rgbaBytes;
+  }
 
 
   @override void dispose() {

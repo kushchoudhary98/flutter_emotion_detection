@@ -9,10 +9,11 @@ import 'package:get/get.dart';
 import 'package:image/image.dart' as img;
 import 'package:tflite_flutter/tflite_flutter.dart';
 
-class EmotionController {
+class EmotionController extends GetxController {
   TFLiteHelper? tfLiteHelper;
   Interpreter? _interpreter;
   List<String> emotions = ['angry','disgust','fear','happy','neutral','sad','surprise'];
+  Uint8List? imageTobeDisplayed;
 
   EmotionController() {
     tfLiteHelper = TFLiteHelper();
@@ -23,45 +24,64 @@ class EmotionController {
     _interpreter = tfLiteHelper?.interpreter;
   }
   
-  Future<List<String>?> detectEmotions(Uint8List imageBytes, List<Rect> faces, int width, int height) async {
-    List<String> emotionsPerFace = [];
+  // Future<List<String>?> detectEmotions(Uint8List imageBytes, List<Rect> boxes, int width, int height) async {
+  //   List<String> emotionsPerFace = [];
 
-    for(Rect face in faces){
-      Uint8List? faceBytes = preprocessFace(imageBytes, face, width, height);
+  //   for(Rect box in boxes){
+  //     Uint8List? faceBytes = preprocessFace(imageBytes, box, width, height);
+  //     if(faceBytes == null) {
+  //       print('Log: CANNOT DECODE IMAGE in emotion_controller.dart');
+  //       return null;
+  //     }
+
+  //     Float32List tensorBuffer = imageToTensor(faceBytes);
+  //     List<double> output = List<double>.from(runTFLiteModel(tensorBuffer));
+
+  //     int maxIndex = output.indexWhere((value) => value == output.reduce((a, b) => a > b ? a : b));
+  //     emotionsPerFace.add(emotions[maxIndex]);
+  //   }
+
+  //   return emotionsPerFace;
+  // }
+
+  List<Uint8List> getProcessedImages(img.Image image, List<Rect> boxes, int width, int height){
+    List<Uint8List> processedImages = [];
+
+    for(Rect box in boxes){
+      Uint8List? faceBytes = preprocessFace(image, box, width, height);
       if(faceBytes == null) {
         print('Log: CANNOT DECODE IMAGE in emotion_controller.dart');
-        return null;
+        return [];
       }
-
-      Float32List tensorBuffer = imageToTensor(faceBytes);
-      List<double> output = List<double>.from(runTFLiteModel(tensorBuffer));
-
-      int maxIndex = output.indexWhere((value) => value == output.reduce((a, b) => a > b ? a : b));
-      emotionsPerFace.add(emotions[maxIndex]);
-
+      print('Log: FaceBytes length: ${faceBytes.length}');
+      processedImages.add(faceBytes);
     }
 
-    return emotionsPerFace;
+    return processedImages;
   }
 
-  Uint8List? preprocessFace(Uint8List imageBytes, Rect faceRect, int imageWidth, int imageHeight) {
-    img.Image image = img.Image.fromBytes(width: imageWidth, height: imageHeight, bytes: Uint8List.fromList(imageBytes).buffer, numChannels: 1);
-
+  Uint8List preprocessFace(img.Image image, Rect faceRect, int imageWidth, int imageHeight) {
     int x = faceRect.left.toInt();
     int y = faceRect.top.toInt();
     int width = faceRect.width.toInt();
     int height = faceRect.height.toInt();
+
+    print('x: $x');
+    print('y: $y');
+    print('width: $width');
+    print('height: $height');
+    
 
     x = x.clamp(0, imageWidth - 1);
     y = y.clamp(0, imageHeight - 1);
     width = width.clamp(1, imageWidth - x);
     height = height.clamp(1, imageHeight - y);
 
-    img.Image croppedFace = img.copyCrop(image, x: x, y: y, width: width, height: height);
+    img.Image rotatedImage = img.copyRotate(image, angle: -90);
+    img.Image croppedFace = img.copyCrop(rotatedImage, x: x, y: y, width: width, height: height);
     img.Image resizedFace = img.copyResize(croppedFace, width: 48, height: 48);
-    img.Image grayscaleFace = img.grayscale(resizedFace);
 
-    return Uint8List.fromList(img.encodeJpg(grayscaleFace));
+    return img.encodeJpg(resizedFace);
   }
 
   Float32List imageToTensor(Uint8List imageBytes) {

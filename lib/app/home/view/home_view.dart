@@ -24,7 +24,7 @@ class HomeView extends GetView<HomeController> {
           homeController.startCameraStream();
         },
         builder: (HomeController controller) {
-          if(controller.cameraController == null) {
+          if(controller.cameraController == null || controller.im == null) {
             return Container(
               child: Center(child: Text('Loading Camera...')),
             );
@@ -55,6 +55,7 @@ class HomeView extends GetView<HomeController> {
                 ],
               ),
               Center(child: Obx(() => Text('Number of faces: ${controller.faceCount.value} and emotion: ${controller.emotion.value}'))),
+              Container(child: Image.memory(controller.im, scale: 1,),)
             ]
           );
         },

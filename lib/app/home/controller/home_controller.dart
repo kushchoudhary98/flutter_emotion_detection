@@ -11,6 +11,7 @@ import 'package:flutter_face_detection/app/home/controller/emotion_controller.da
 import 'package:flutter_face_detection/app/home/controller/face_controller.dart';
 import 'package:get/get.dart';
 import 'package:google_mlkit_face_detection/google_mlkit_face_detection.dart';
+import 'package:image/image.dart' as imglib;
 
 class HomeController extends GetxController{
   CameraManager? cameraManager;
@@ -21,6 +22,7 @@ class HomeController extends GetxController{
   RxInt faceCount = 0.obs;
   RxString emotion = ''.obs;
   RxList<Rect> faceBoxes = <Rect>[].obs;
+  Uint8List im = Uint8List(48*48*4);
 
   HomeController() {
     cameraManager = CameraManager();
@@ -39,6 +41,10 @@ class HomeController extends GetxController{
 
   void startCameraStream() {
     print("Starting Camera Stream");
+    if (cameraController == null) {
+      print("Log: CameraController is null");
+      return;
+    }
     cameraController!.startImageStream((cameraImage) async {
       if(_isDetecting) { return; }
 
@@ -52,7 +58,6 @@ class HomeController extends GetxController{
         return;
       }
 
-      Uint8List imageBytes = data[0] as Uint8List;
       InputImage inputImage = data[1] as InputImage;
 
       List<Rect> faces = await faceController.detectFaces(inputImage);
@@ -62,22 +67,29 @@ class HomeController extends GetxController{
         print(faces[0]);
       }
       faceCount.value = faces.length;
-      Uint8List? image = cameraManager?.convertYUV420ToRGB(cameraImage);
+      imglib.Image? image = cameraManager?.convertYUV420ToGrayscale(cameraImage);
       if(image == null) {
-        print('Log: image is null. in convertYUV420ToRGB');
+        print('Log: image is null. in convertYUV420ToGrayscale');
         _isDetecting = false;
         return;
       }
-      List<String>? emotions = await emotionController.detectEmotions(image, faces, cameraImage.width, cameraImage.height);
-      if(emotions == null) {
-        print('Log: emotions is null. in detectEmotions');
-        _isDetecting = false;
-        return;
+      // List<String>? emotions = await emotionController.detectEmotions(image, faces, cameraImage.width, cameraImage.height);
+      // if(emotions == null) {
+      //   print('Log: emotions is null. in detectEmotions');
+      //   _isDetecting = false;
+      //   return;
+      // }
+      // if(emotions.isNotEmpty) emotion.value = emotions[0];
+
+      List<Uint8List> processedImages = emotionController.getProcessedImages(image, faces, cameraImage.width, cameraImage.height);
+      if(processedImages.isNotEmpty) {
+        im = processedImages[0];
+        print("Log: Image length: ${im.length}");
       }
-      print(emotions);
-      if(emotions.isNotEmpty) emotion.value = emotions[0];
       _isDetecting = false;
-      sleep(Duration(milliseconds: 500));
+      update();
+      sleep(Duration(milliseconds: 1000));
+
     });
   }
   
