@@ -1,0 +1,63 @@
+
+import 'package:camera/camera.dart';
+import 'package:flutter/material.dart';
+import 'package:flutter_face_detection/app/home/controller/camera_controller.dart';
+import 'package:flutter_face_detection/app/home/controller/home_controller.dart';
+import 'package:get/get.dart';
+import 'package:get/get_state_manager/get_state_manager.dart';
+
+class HomeView extends GetView<HomeController> {
+  HomeView({Key? key}) : super(key: key);
+
+  final CameraManager cameraManager = Get.find<CameraManager>();
+  final HomeController homeController = Get.find<HomeController>();
+
+  @override
+  Widget build(BuildContext context) {
+
+    return Scaffold(
+      body: GetBuilder<HomeController>(
+        init: homeController,
+        initState: (state) async {
+          await homeController.loadCamera();
+          homeController.startCameraStream();
+        },
+        builder: (HomeController controller) {
+          if(controller.cameraController == null) {
+            return Container(
+              child: Center(child: Text('Loading Camera...')),
+            );
+          }
+          return Column(
+            children: [
+              Stack(
+                children: [
+                  CameraPreview(controller.cameraController!),
+                  ...controller.faceBoxes.value.map((box)  {
+                    final perviewWidth = controller.cameraController!.value.previewSize!.height;
+                    final perviewHeight = controller.cameraController!.value.previewSize!.width;
+                    return Positioned(
+                      left: box.left * MediaQuery.of(context).size.width / perviewWidth,
+                      top: box.top * 1.3,
+                      width: box.width * MediaQuery.of(context).size.width / perviewWidth,
+                      height: box.height * (MediaQuery.of(context).size.height / perviewHeight) * 0.8,
+                      child: Container(
+                        decoration: BoxDecoration(
+                          border: Border.all(
+                            color: Colors.red,
+                            width: 2,
+                          ),
+                        ),
+                      ),
+                    );
+                  }),
+                ],
+              ),
+              Center(child: Obx(() => Text('Number of faces: ${controller.faceCount.value}'))),
+            ]
+          );
+        },
+      ),
+    );
+  }
+}
