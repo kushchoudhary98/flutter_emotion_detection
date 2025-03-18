@@ -124,6 +124,47 @@ class CameraManager extends GetxController {
     return nv21;
   }
 
+  Uint8List? convertCameraImageToUint8List(CameraImage image) {
+    final WriteBuffer allBytes = WriteBuffer();
+    for (var plane in image.planes) {
+      allBytes.putUint8List(plane.bytes);
+    }
+    return allBytes.done().buffer.asUint8List();
+  }
+
+  Uint8List convertYUV420ToRGB(CameraImage image) {
+    final int width = image.width;
+    final int height = image.height;
+    final int yRowStride = image.planes[0].bytesPerRow;
+    final int uvRowStride = image.planes[1].bytesPerRow;
+    final int uvPixelStride = image.planes[1].bytesPerPixel ?? 1;
+
+    Uint8List rgbBytes = Uint8List(width * height * 3);
+    int index = 0;
+
+    for (int y = 0; y < height; y++) {
+      for (int x = 0; x < width; x++) {
+        int yIndex = y * yRowStride + x;
+        int uvIndex = (y ~/ 2) * uvRowStride + (x ~/ 2) * uvPixelStride;
+
+        int Y = image.planes[0].bytes[yIndex] & 0xFF;
+        int U = image.planes[1].bytes[uvIndex] & 0xFF;
+        int V = image.planes[2].bytes[uvIndex] & 0xFF;
+
+        int R = (Y + 1.402 * (V - 128)).toInt().clamp(0, 255);
+        int G = (Y - 0.344136 * (U - 128) - 0.714136 * (V - 128)).toInt().clamp(0, 255);
+        int B = (Y + 1.772 * (U - 128)).toInt().clamp(0, 255);
+
+        rgbBytes[index++] = R;
+        rgbBytes[index++] = G;
+        rgbBytes[index++] = B;
+      }
+    }
+
+    return Uint8List.fromList(rgbBytes);
+  }
+
+
 
   @override void dispose() {
     cameraController?.dispose();

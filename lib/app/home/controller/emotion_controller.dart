@@ -1,14 +1,30 @@
 
+import 'dart:ffi';
 import 'dart:typed_data';
 
+import 'package:flutter/cupertino.dart';
 import 'package:flutter/services.dart';
+import 'package:flutter_face_detection/app/home/controller/tflite_helper.dart';
 import 'package:get/get.dart';
 import 'package:image/image.dart' as img;
+import 'package:tflite_flutter/tflite_flutter.dart';
 
-class EmotionController extends GetxController {
+class EmotionController {
+  TFLiteHelper? tfLiteHelper;
+  Interpreter? _interpreter;
+  List<String> emotions = ['angry','disgust','fear','happy','neutral','sad','surprise'];
+
+  EmotionController() {
+    tfLiteHelper = TFLiteHelper();
+  }
+
+  Future<void> load() async {
+    await tfLiteHelper?.loadModel();
+    _interpreter = tfLiteHelper?.interpreter;
+  }
   
   Future<List<String>?> detectEmotions(Uint8List imageBytes, List<Rect> faces, int width, int height) async {
-    List<String> emotions = [];
+    List<String> emotionsPerFace = [];
 
     for(Rect face in faces){
       Uint8List? faceBytes = preprocessFace(imageBytes, face, width, height);
@@ -17,13 +33,19 @@ class EmotionController extends GetxController {
         return null;
       }
 
+      Float32List tensorBuffer = imageToTensor(faceBytes);
+      List<double> output = List<double>.from(runTFLiteModel(tensorBuffer));
+
+      int maxIndex = output.indexWhere((value) => value == output.reduce((a, b) => a > b ? a : b));
+      emotionsPerFace.add(emotions[maxIndex]);
 
     }
+
+    return emotionsPerFace;
   }
 
   Uint8List? preprocessFace(Uint8List imageBytes, Rect faceRect, int imageWidth, int imageHeight) {
-    img.Image? image = img.decodeImage(imageBytes);
-    if (image == null) return null;
+    img.Image image = img.Image.fromBytes(width: imageWidth, height: imageHeight, bytes: Uint8List.fromList(imageBytes).buffer, numChannels: 1);
 
     int x = faceRect.left.toInt();
     int y = faceRect.top.toInt();
@@ -50,8 +72,8 @@ class EmotionController extends GetxController {
 
     for (int y = 0; y < 48; y++) {
       for (int x = 0; x < 48; x++) {
-        int pixel = image.getPixel(x, y);
-        int grayValue = img.getLuminance(pixel);
+        img.Pixel pixel = image.getPixel(x, y); 
+        num grayValue = img.getLuminance(pixel);
         tensorBuffer[y * 48 + x] = grayValue / 255.0; // Normalize
       }
     }
@@ -59,6 +81,13 @@ class EmotionController extends GetxController {
     return tensorBuffer;
   }
 
+  List<dynamic> runTFLiteModel(Float32List inputData) {
+    var input = inputData.reshape([1, 48, 48, 1]); // Shape for TFLite
+    var output = Float32List(7).reshape([1, 7]); // Adjust output size
+
+    _interpreter?.run(input, output);
+    return output[0];
+  }
 
 
 }

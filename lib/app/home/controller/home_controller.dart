@@ -19,15 +19,22 @@ class HomeController extends GetxController{
   CameraController? cameraController;
   bool _isDetecting = false;
   RxInt faceCount = 0.obs;
+  RxString emotion = ''.obs;
   RxList<Rect> faceBoxes = <Rect>[].obs;
 
   HomeController() {
     cameraManager = CameraManager();
+    emotionController = EmotionController();
+    faceController = FaceController();
   }
 
   Future<void> loadCamera() async {
     cameraController = await cameraManager?.load();
     update();
+  }
+
+  Future<void> loadModel() async {
+    await emotionController.load();
   }
 
   void startCameraStream() {
@@ -55,13 +62,29 @@ class HomeController extends GetxController{
         print(faces[0]);
       }
       faceCount.value = faces.length;
-
-      List<String>? emotions = await emotionController.detectEmotions(imageBytes, faces, cameraImage.width, cameraImage.height);
-
+      Uint8List? image = cameraManager?.convertYUV420ToRGB(cameraImage);
+      if(image == null) {
+        print('Log: image is null. in convertYUV420ToRGB');
+        _isDetecting = false;
+        return;
+      }
+      List<String>? emotions = await emotionController.detectEmotions(image, faces, cameraImage.width, cameraImage.height);
+      if(emotions == null) {
+        print('Log: emotions is null. in detectEmotions');
+        _isDetecting = false;
+        return;
+      }
+      print(emotions);
+      if(emotions.isNotEmpty) emotion.value = emotions[0];
       _isDetecting = false;
       sleep(Duration(milliseconds: 500));
-      update();
     });
   }
   
+  @override
+  void dispose() {
+    cameraController?.stopImageStream();
+    cameraController?.dispose();
+    super.dispose();
+  }
 }

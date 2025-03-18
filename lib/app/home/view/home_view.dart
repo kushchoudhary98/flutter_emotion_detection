@@ -20,6 +20,7 @@ class HomeView extends GetView<HomeController> {
         init: homeController,
         initState: (state) async {
           await homeController.loadCamera();
+          await homeController.loadModel();
           homeController.startCameraStream();
         },
         builder: (HomeController controller) {
@@ -53,7 +54,7 @@ class HomeView extends GetView<HomeController> {
                   }),
                 ],
               ),
-              Center(child: Obx(() => Text('Number of faces: ${controller.faceCount.value}'))),
+              Center(child: Obx(() => Text('Number of faces: ${controller.faceCount.value} and emotion: ${controller.emotion.value}'))),
             ]
           );
         },
