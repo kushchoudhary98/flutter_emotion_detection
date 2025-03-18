@@ -20,7 +20,7 @@ class HomeController extends GetxController{
   CameraController? cameraController;
   bool _isDetecting = false;
   RxInt faceCount = 0.obs;
-  RxString emotion = ''.obs;
+  RxList<String> emotions = <String>[].obs;
   RxList<Rect> faceBoxes = <Rect>[].obs;
   Uint8List im = Uint8List(48*48*4);
 
@@ -61,7 +61,6 @@ class HomeController extends GetxController{
       InputImage inputImage = data[1] as InputImage;
 
       List<Rect> faces = await faceController.detectFaces(inputImage);
-      faceBoxes.value = faces;
       print('Number of faces: ${faces.length}');
       if(faces.length > 0) {
         print(faces[0]);
@@ -73,22 +72,19 @@ class HomeController extends GetxController{
         _isDetecting = false;
         return;
       }
-      // List<String>? emotions = await emotionController.detectEmotions(image, faces, cameraImage.width, cameraImage.height);
-      // if(emotions == null) {
-      //   print('Log: emotions is null. in detectEmotions');
-      //   _isDetecting = false;
-      //   return;
-      // }
-      // if(emotions.isNotEmpty) emotion.value = emotions[0];
-
-      List<Uint8List> processedImages = emotionController.getProcessedImages(image, faces, cameraImage.width, cameraImage.height);
-      if(processedImages.isNotEmpty) {
-        im = processedImages[0];
-        print("Log: Image length: ${im.length}");
+      List<String> _emotions = await emotionController.detectEmotions(image, faces, cameraImage.width, cameraImage.height);
+      if(_emotions.isNotEmpty) { 
+        emotions.value = _emotions;
+        faceBoxes.value = faces;
       }
+
+      // List<Uint8List> processedImages = emotionController.getProcessedImages(image, faces, cameraImage.width, cameraImage.height);
+      // if(processedImages.isNotEmpty) {
+      //   im = processedImages[0];
+      //   print("Log: Image length: ${im.length}");
+      // }
       _isDetecting = false;
-      update();
-      sleep(Duration(milliseconds: 1000));
+      //sleep(Duration(milliseconds: 1000));
 
     });
   }
