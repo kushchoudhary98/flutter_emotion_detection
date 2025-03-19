@@ -1,4 +1,3 @@
-
 import 'package:camera/camera.dart';
 import 'package:collection/collection.dart';
 import 'package:flutter/material.dart';
@@ -10,25 +9,15 @@ import 'package:get/get_state_manager/get_state_manager.dart';
 class HomeView extends GetView<HomeController> {
   HomeView({Key? key}) : super(key: key);
 
-  final CameraManager cameraManager = Get.find<CameraManager>();
-  final HomeController homeController = Get.find<HomeController>();
-
   @override
   Widget build(BuildContext context) {
 
     return Scaffold(
       body: GetBuilder<HomeController>(
-        init: homeController,
-        initState: (state) async {
-          await homeController.loadCamera();
-          await homeController.loadModel();
-          homeController.startCameraStream();
-        },
+        init: controller,
         builder: (HomeController controller) {
-          if(controller.cameraController == null || controller.im == null) {
-            return Container(
-              child: Center(child: Text('Loading Camera...')),
-            );
+          if(controller.cameraController == null) {
+            return Center(child: Text('Loading Camera...'));
           }
           return Column(
             children: [

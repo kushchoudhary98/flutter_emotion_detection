@@ -185,7 +185,6 @@ class CameraManager extends GetxController {
       for (int x = 0; x < width; x++) {
         final index = y * width + x;
         final luminance = yPlane.bytes[index];
-        if(x < 2 && y < 2) print(luminance);
         grayscaleImage.setPixel(x, y, imglib.ColorInt32.rgb(luminance, luminance, luminance));
       }
     }
