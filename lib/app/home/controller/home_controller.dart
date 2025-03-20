@@ -58,7 +58,7 @@ class HomeController extends GetxController{
           return;
         }
 
-        InputImage inputImage = data[1] as InputImage;
+        InputImage inputImage = data;
 
         List<Rect> faces = await faceController.detectFaces(inputImage);
         print('Number of faces: ${faces.length}');
@@ -76,6 +76,10 @@ class HomeController extends GetxController{
         if(_emotions.isNotEmpty) { 
           emotions.assignAll(_emotions);
           faceBoxes.assignAll(faces);
+        }
+        else {
+          emotions.clear();
+          faceBoxes.clear();
         }
 
         // List<Uint8List> processedImages = emotionController.getProcessedImages(image, faces, cameraImage.width, cameraImage.height);

@@ -30,7 +30,7 @@ class CameraManager extends GetxController {
     return cameraController;
   }
 
-  List<Object>? inputImageFromCameraImage(CameraImage image) {
+  InputImage? inputImageFromCameraImage(CameraImage image) {
     // get image rotation
     // it is used in android to convert the InputImage from Dart to Java
     // `rotation` is not used in iOS to convert the InputImage from Dart to Obj-C
@@ -58,21 +58,44 @@ class CameraManager extends GetxController {
    
     if (rotation == null) return null;
 
-    Uint8List nv21Data = convertYUV420ToNV21(image);
+    if(Platform.isAndroid){
+      Uint8List nv21Data = convertYUV420ToNV21(image);
 
-    // compose InputImage using bytes
-    return [
-      nv21Data,
-      InputImage.fromBytes(
-      bytes: nv21Data,
-      metadata: InputImageMetadata(
-        size: Size(image.width.toDouble(), image.height.toDouble()),
-        rotation: rotation, // used only in Android
-        format: Platform.isAndroid? InputImageFormat.nv21 : InputImageFormat.bgra8888, // used only in iOS
-        bytesPerRow: image.width, // used only in iOS
-      ),
-    )
-    ];
+      return 
+        InputImage.fromBytes(
+        bytes: nv21Data,
+        metadata: InputImageMetadata(
+          size: Size(image.width.toDouble(), image.height.toDouble()),
+          rotation: rotation,
+          format: Platform.isAndroid? InputImageFormat.nv21 : InputImageFormat.bgra8888,
+          bytesPerRow: image.width,
+        ),
+      );
+    }
+    else {
+      //for iOS
+      final format = InputImageFormatValue.fromRawValue(image.format.raw);
+      if (format == null ||
+              (Platform.isAndroid && format != InputImageFormat.nv21) ||
+              (Platform.isIOS && format != InputImageFormat.bgra8888)) {
+        return null;
+      }
+
+      // since format is constraint to nv21 or bgra8888, both only have one plane
+      if (image.planes.length != 1) return null;
+      final plane = image.planes.first;
+
+      // compose InputImage using bytes
+      return InputImage.fromBytes(
+        bytes: plane.bytes,
+        metadata: InputImageMetadata(
+          size: Size(image.width.toDouble(), image.height.toDouble()),
+          rotation: rotation, // used only in Android
+          format: format, // used only in iOS
+          bytesPerRow: plane.bytesPerRow, // used only in iOS
+        ),
+      );
+    }
   }
 
   Uint8List convertYUV420ToNV21(CameraImage image) {
