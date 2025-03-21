@@ -46,7 +46,6 @@ jobs:
   build-ios:
     name: Build iOS IPA
     runs-on: macos-latest
-    needs: build-android # Runs after Android build
 
     steps:
       - name: Checkout Code
