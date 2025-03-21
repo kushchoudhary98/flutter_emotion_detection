@@ -22,7 +22,7 @@ class HomeController extends GetxController{
   RxInt faceCount = 0.obs;
   RxList<String> emotions = <String>[].obs;
   RxList<Rect> faceBoxes = <Rect>[].obs;
-  Uint8List im = Uint8List(48*48*4);
+  //Uint8List im = Uint8List(48*48*4);
 
   @override
   Future<void> onInit() async {
@@ -65,17 +65,28 @@ class HomeController extends GetxController{
         if(faces.isNotEmpty) {
           print(faces[0]);
         }
+        imglib.Image? image = null;
         faceCount.value = faces.length;
-        imglib.Image? image = cameraManager?.convertYUV420ToGrayscale(cameraImage);
+        if(Platform.isAndroid){
+          image = cameraManager?.convertYUV420ToGrayscale(cameraImage);
+        }
+        else {
+          image = cameraManager?.convertBGRA8888ToGreyscale(cameraImage);
+        }
         if(image == null) {
           print('Log: image is null. in convertYUV420ToGrayscale');
           _isDetecting = false;
           return;
         }
+        //Uint8List? debugImage = cameraManager?.convertToJPG(image);
         List<String> _emotions = await emotionController.detectEmotions(image, faces, cameraImage.width, cameraImage.height);
         if(_emotions.isNotEmpty) { 
           emotions.assignAll(_emotions);
           faceBoxes.assignAll(faces);
+          // if(debugImage != null){
+          //   im = debugImage;
+          // }
+          update();
         }
         else {
           emotions.clear();

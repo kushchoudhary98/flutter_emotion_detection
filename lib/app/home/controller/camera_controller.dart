@@ -191,9 +191,9 @@ class CameraManager extends GetxController {
 
   imglib.Image convertYUV420ToGrayscale(CameraImage image) {
     // Ensure the image format is YUV420
-    if (image.format.group != ImageFormatGroup.yuv420) {
-      throw UnsupportedError('Unsupported image format: ${image.format.group}');
-    }
+    // if (image.format.group != ImageFormatGroup.yuv420) {
+    //   throw UnsupportedError('Unsupported image format: ${image.format.group}');
+    // }
 
     // Extract the Y plane (luminance)
     final yPlane = image.planes[0];
@@ -214,6 +214,29 @@ class CameraManager extends GetxController {
 
     // Encode the grayscale image to PNG format
     return grayscaleImage;
+  }
+
+  Uint8List convertToJPG(imglib.Image image) {
+    return Uint8List.fromList(imglib.encodeJpg(image));
+  }
+
+  imglib.Image convertBGRA8888ToGreyscale(CameraImage cameraImage) {
+    final int width = cameraImage.width;
+    final int height = cameraImage.height;
+    final Uint8List bytes = cameraImage.planes[0].bytes;
+    final imglib.Image greyscaleImage = imglib.Image(width: width, height: height);
+
+    for (int y = 0; y < height; y++) {
+      for (int x = 0; x < width; x++) {
+        int index = (y * width + x) * 4;
+        int b = bytes[index];
+        int g = bytes[index + 1];
+        int r = bytes[index + 2];
+        int grey = ((r * 0.299) + (g * 0.587) + (b * 0.114)).toInt();
+        greyscaleImage.setPixel(x, y, imglib.ColorInt32.rgb(grey, grey, grey));
+      }
+    }
+    return greyscaleImage;
   }
 
   Uint8List convertGrayscaleToRGBA(int width, int height, Uint8List grayscaleBytes) {

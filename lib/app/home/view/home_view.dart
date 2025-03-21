@@ -54,7 +54,7 @@ class HomeView extends GetView<HomeController> {
                 )
               ),
               Center(child: Obx(() => Text('Number of faces: ${controller.faceCount.value}'))),
-              //Container(child: Image.memory(controller.im, scale: 1,),)
+              //Image.memory(controller.im, scale: 2,)
             ]
           );
         },

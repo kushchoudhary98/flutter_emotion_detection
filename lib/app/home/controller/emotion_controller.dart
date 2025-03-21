@@ -1,5 +1,4 @@
-
-import 'dart:ffi';
+import 'dart:io';
 import 'dart:typed_data';
 
 import 'package:flutter/cupertino.dart';
@@ -70,7 +69,7 @@ class EmotionController extends GetxController {
     width = width.clamp(1, imageWidth - x);
     height = height.clamp(1, imageHeight - y);
 
-    img.Image rotatedImage = img.copyRotate(image, angle: -90);
+    img.Image rotatedImage = img.copyRotate(image, angle: (Platform.isAndroid)?-90:0);
     img.Image croppedFace = img.copyCrop(rotatedImage, x: x, y: y, width: width, height: height);
     img.Image resizedFace = img.copyResize(croppedFace, width: 48, height: 48);
 
