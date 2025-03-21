@@ -1,98 +1,30 @@
-name: Flutter Release Build
+name: Flutter Build
 
 on:
-  pull_request:
-    branches:
-      - main
   push:
     branches:
       - main
-      
+      - next
+  workflow_dispatch:
+
 jobs:
   build-android:
     name: Build Android APK
     runs-on: ubuntu-latest
 
     steps:
-      - name: Checkout Code
-        uses: actions/checkout@v4
+      - uses: actions/checkout@v2
+
+      - name: Setup Java
+        uses: actions/setup-java@v1
+        with:
+          java-version: "19.x"
 
       - name: Setup Flutter
         uses: subosito/flutter-action@v2
         with:
-          flutter-version: 3.29.2 
+          channel: stable
+          flutter-version: 3.22.2
 
-      - name: Install Dependencies
-        run: flutter pub get
-
-      - name: Build APK
+      - name: Build Flutter app for Android
         run: flutter build apk --release
-
-      - name: Upload APK Artifact
-        uses: actions/upload-artifact@v4
-        with:
-          name: android-apk
-          path: build/app/outputs/flutter-apk/app-release.apk
-
-  build-ios:
-    name: Build iOS IPA
-    runs-on: macos-latest
-
-    steps:
-      - name: Checkout Code
-        uses: actions/checkout@v4
-
-      - name: Setup Flutter
-        uses: subosito/flutter-action@v2
-        with:
-          flutter-version: 3.29.2
-
-      - name: Install Dependencies
-        run: flutter pub get
-
-      - name: Setup Xcode
-        run: sudo xcode-select -s /Applications/Xcode.app/Contents/Developer
-
-      - name: Build iOS
-        run: flutter build ios --release --no-codesign
-
-      - name: Upload iOS Artifact
-        uses: actions/upload-artifact@v4
-        with:
-          name: ios-build
-          path: build/ios/iphoneos/
-
-  release:
-    name: Create GitHub Release
-    needs: [build-android, build-ios]
-    runs-on: ubuntu-latest
-
-    steps:
-      - name: Checkout Code
-        uses: actions/checkout@v4
-
-      - name: Download Android Artifact
-        uses: actions/download-artifact@v4
-        with:
-          name: android-apk
-          path: artifacts/
-
-      - name: Download iOS Artifact
-        uses: actions/download-artifact@v4
-        with:
-          name: ios-build
-          path: artifacts/
-
-      - name: Create GitHub Release
-        uses: softprops/action-gh-release@v1
-        with:
-          tag_name: ${{ github.ref_name }}
-          release_name: Release ${{ github.ref_name }}
-          body: "Automated Flutter Release Build"
-          draft: false
-          prerelease: false
-          files: |
-            artifacts/android-apk/app-release.apk
-            artifacts/ios-build/**
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
