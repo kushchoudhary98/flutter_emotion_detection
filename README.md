@@ -36,9 +36,12 @@ https://github.com/user-attachments/assets/3c388335-833a-4166-84c2-00a41f42ac25
 ### It can also detect multiple faces:
 
 
-
 https://github.com/user-attachments/assets/bd7b6e58-6770-4018-8803-6263887f11a1
 
+### Brightness Detection
+Since the model was trained with all kinds of lighting conditions, it can detect emotions even in dim light. Nevertheless, there is still a prompt for `too dim` and `too bright` lighting.
+
+![Screenshot 2025-03-21 at 8 31 33 PM](https://github.com/user-attachments/assets/c0983e57-c33d-417b-ab2d-72bbd89b66de)
 
 
 ### Packages used
