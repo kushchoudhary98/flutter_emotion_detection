@@ -1,9 +1,12 @@
 name: Flutter Release Build
 
 on:
+  pull_request:
+    branches:
+      - main
   push:
-    tags:
-      - "v*" # Runs on version tags like v1.0.0
+    branches:
+      - main
 
 jobs:
   build-android:
@@ -17,7 +20,7 @@ jobs:
       - name: Setup Flutter
         uses: subosito/flutter-action@v2
         with:
-          flutter-version: 3.x  # Set your Flutter version
+          flutter-version: 3.29.2 
 
       - name: Install Dependencies
         run: flutter pub get
