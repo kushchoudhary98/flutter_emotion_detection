@@ -54,6 +54,13 @@ class HomeView extends GetView<HomeController> {
                 )
               ),
               Center(child: Obx(() => Text('Number of faces: ${controller.faceCount.value}'))),
+              Obx(() => Stack(
+                children: [
+                  Text(controller.brightness<50?"Too dim":"", style: TextStyle(fontSize: 30),),
+                  Text(controller.brightness>200?"Too bright":"",  style: TextStyle(fontSize: 30),),
+                  //Obx(() => Text(controller.brightness.value.toString())),
+                ],
+              )),
               //Image.memory(controller.im, scale: 2,)
             ]
           );

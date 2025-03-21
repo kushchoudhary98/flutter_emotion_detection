@@ -1,4 +1,5 @@
 import 'dart:io';
+import 'dart:ui' as ui;
 import 'package:camera/camera.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
@@ -189,7 +190,7 @@ class CameraManager extends GetxController {
     return Uint8List.fromList(rgbBytes);
   }
 
-  imglib.Image convertYUV420ToGrayscale(CameraImage image) {
+  List<Object> convertYUV420ToGrayscale(CameraImage image) {
     // Ensure the image format is YUV420
     // if (image.format.group != ImageFormatGroup.yuv420) {
     //   throw UnsupportedError('Unsupported image format: ${image.format.group}');
@@ -202,29 +203,36 @@ class CameraManager extends GetxController {
 
     // Create an Image buffer with the same width and height
     final imglib.Image grayscaleImage = imglib.Image(width: width, height: height);
+    int totalBrightness = 0;
+    int pixelCount = width * height;
 
     // Iterate over each pixel to set the luminance value
     for (int y = 0; y < height; y++) {
       for (int x = 0; x < width; x++) {
         final index = y * width + x;
         final luminance = yPlane.bytes[index];
+        totalBrightness += luminance;
         grayscaleImage.setPixel(x, y, imglib.ColorInt32.rgb(luminance, luminance, luminance));
       }
     }
 
     // Encode the grayscale image to PNG format
-    return grayscaleImage;
+    double avgBrightness = totalBrightness / pixelCount;
+    return [grayscaleImage, avgBrightness];
   }
 
   Uint8List convertToJPG(imglib.Image image) {
     return Uint8List.fromList(imglib.encodeJpg(image));
   }
 
-  imglib.Image convertBGRA8888ToGreyscale(CameraImage cameraImage) {
+  List<Object> convertBGRA8888ToGreyscale(CameraImage cameraImage) {
     final int width = cameraImage.width;
     final int height = cameraImage.height;
     final Uint8List bytes = cameraImage.planes[0].bytes;
     final imglib.Image greyscaleImage = imglib.Image(width: width, height: height);
+
+    int totalBrightness = 0;
+    int pixelCount = width * height;
 
     for (int y = 0; y < height; y++) {
       for (int x = 0; x < width; x++) {
@@ -232,11 +240,14 @@ class CameraManager extends GetxController {
         int b = bytes[index];
         int g = bytes[index + 1];
         int r = bytes[index + 2];
-        int grey = ((r * 0.299) + (g * 0.587) + (b * 0.114)).toInt();
-        greyscaleImage.setPixel(x, y, imglib.ColorInt32.rgb(grey, grey, grey));
+        int luminance = ((r * 0.299) + (g * 0.587) + (b * 0.114)).toInt();
+        totalBrightness += luminance;
+        greyscaleImage.setPixel(x, y, imglib.ColorInt32.rgb(luminance, luminance, luminance));
       }
     }
-    return greyscaleImage;
+
+    double avgBrightness = totalBrightness / pixelCount;
+    return [greyscaleImage, avgBrightness];
   }
 
   Uint8List convertGrayscaleToRGBA(int width, int height, Uint8List grayscaleBytes) {
@@ -250,7 +261,6 @@ class CameraManager extends GetxController {
     }
     return rgbaBytes;
   }
-
 
   @override void dispose() {
     cameraController?.dispose();

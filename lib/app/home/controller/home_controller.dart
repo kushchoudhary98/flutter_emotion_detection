@@ -1,5 +1,6 @@
 
 import 'dart:developer';
+import 'dart:ffi';
 import 'dart:io';
 import 'dart:math';
 import 'dart:ui';
@@ -22,6 +23,7 @@ class HomeController extends GetxController{
   RxInt faceCount = 0.obs;
   RxList<String> emotions = <String>[].obs;
   RxList<Rect> faceBoxes = <Rect>[].obs;
+  RxDouble brightness = 0.0.obs;
   //Uint8List im = Uint8List(48*48*4);
 
   @override
@@ -65,18 +67,17 @@ class HomeController extends GetxController{
         if(faces.isNotEmpty) {
           print(faces[0]);
         }
-        imglib.Image? image = null;
+        imglib.Image? image;
         faceCount.value = faces.length;
         if(Platform.isAndroid){
-          image = cameraManager?.convertYUV420ToGrayscale(cameraImage);
+          final data = cameraManager?.convertYUV420ToGrayscale(cameraImage);
+          image = data?[0] as imglib.Image;
+          brightness.value = data?[1] as double;
         }
         else {
-          image = cameraManager?.convertBGRA8888ToGreyscale(cameraImage);
-        }
-        if(image == null) {
-          print('Log: image is null. in convertYUV420ToGrayscale');
-          _isDetecting = false;
-          return;
+          final data = cameraManager?.convertBGRA8888ToGreyscale(cameraImage);
+          image = data?[0] as imglib.Image;
+          brightness.value = data?[1] as double;
         }
         //Uint8List? debugImage = cameraManager?.convertToJPG(image);
         List<String> _emotions = await emotionController.detectEmotions(image, faces, cameraImage.width, cameraImage.height);
@@ -86,7 +87,6 @@ class HomeController extends GetxController{
           // if(debugImage != null){
           //   im = debugImage;
           // }
-          update();
         }
         else {
           emotions.clear();
