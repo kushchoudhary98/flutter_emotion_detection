@@ -17,6 +17,30 @@ You can find the dataset that I used for training the model [here](https://www.k
 
 And the Python notebook that did all the image preprocessing, feature extraction, training, etc. [here](https://colab.research.google.com/drive/1EgQFpVPb5ZIXg8QftuEbKk1zU9g_QLr1?usp=sharing)
 
+## ScreenRecordings
+for iOS
+
+
+https://github.com/user-attachments/assets/31595d7f-a201-45e1-8fe9-608db1790c35
+
+
+
+for Android
+
+
+
+https://github.com/user-attachments/assets/3c388335-833a-4166-84c2-00a41f42ac25
+
+
+
+### It can also detect multiple faces:
+
+
+
+https://github.com/user-attachments/assets/bd7b6e58-6770-4018-8803-6263887f11a1
+
+
+
 ### Packages used
 - camera
 - get
